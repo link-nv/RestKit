@@ -24,7 +24,7 @@
  * Defines a protocol for mapping Cocoa objects to remote resource locations and
  * serializables representations.
  */
-@protocol RKRouter
+@protocol RKRouter <NSObject>
 
 /**
  * Returns the resource path to send requests for a given object and HTTP method

@@ -31,7 +31,7 @@ extern NSString* const RKManagedObjectStoreDidFailSaveNotification;
 
 ///////////////////////////////////////////////////////////////////
 
-@protocol RKManagedObjectStoreDelegate
+@protocol RKManagedObjectStoreDelegate <NSObject>
 @optional
 
 - (void)managedObjectStore:(RKManagedObjectStore *)objectStore didFailToCreatePersistentStoreCoordinatorWithError:(NSError *)error;

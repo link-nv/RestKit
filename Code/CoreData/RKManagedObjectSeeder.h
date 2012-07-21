@@ -23,7 +23,7 @@
 // The default seed database filename. Used when the object store has not been initialized
 extern NSString* const RKDefaultSeedDatabaseFileName;
 
-@protocol RKManagedObjectSeederDelegate
+@protocol RKManagedObjectSeederDelegate <NSObject>
 @required
 
 // Invoked when the seeder creates a new object

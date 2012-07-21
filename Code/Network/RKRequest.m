@@ -92,8 +92,8 @@ RKRequestMethod RKRequestMethodTypeFromName(NSString *methodName) {
 @property (nonatomic, retain, readwrite) RKResponse *response;
 @end
 
-@implementation RKRequest
 @class GCOAuth;
+@implementation RKRequest
 
 @synthesize URL = _URL;
 @synthesize URLRequest = _URLRequest;

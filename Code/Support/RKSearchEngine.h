@@ -25,7 +25,7 @@
  textual representation of content contained within the receiver. Searchable
  objects can be searched via instances of RKSearchEngine.
  */
-@protocol RKSearchable
+@protocol RKSearchable <NSObject>
 
 @required
 

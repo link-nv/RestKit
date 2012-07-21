@@ -25,7 +25,7 @@
  data to and from string representations and are configured via the
  RKParserRegistry shared instance.
  */
-@protocol RKParser
+@protocol RKParser <NSObject>
 
 /**
  Returns an object representation of the source string encoded in the
