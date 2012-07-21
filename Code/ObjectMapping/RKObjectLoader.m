@@ -109,6 +109,13 @@
 }
 
 - (void)informDelegateOfError:(NSError *)error {
+    if (![NSThread isMainThread]) {
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [self informDelegateOfError:error];
+        }];
+        return;
+    }
+
     [(NSObject<RKObjectLoaderDelegate>*)_delegate objectLoader:self didFailWithError:error];
 
     if (self.onDidFailWithError) {
@@ -125,8 +132,12 @@
     self.loaded = successful;
     
     if ([self.delegate respondsToSelector:@selector(objectLoaderDidFinishLoading:)]) {
-        [(NSObject<RKObjectLoaderDelegate>*)self.delegate performSelectorOnMainThread:@selector(objectLoaderDidFinishLoading:)
-                                                                           withObject:self waitUntilDone:YES];
+        if ([NSThread isMainThread])
+            [(NSObject<RKObjectLoaderDelegate>*)self.delegate objectLoaderDidFinishLoading:self];
+        else
+            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                [(NSObject<RKObjectLoaderDelegate>*)self.delegate objectLoaderDidFinishLoading:self];
+            }];
     }
 
     [[NSNotificationCenter defaultCenter] postNotificationName:RKRequestDidFinishLoadingNotification object:self];
@@ -134,7 +145,12 @@
 
 // Invoked on the main thread. Inform the delegate.
 - (void)informDelegateOfObjectLoadWithResultDictionary:(NSDictionary*)resultDictionary {
-    NSAssert([NSThread isMainThread], @"RKObjectLoaderDelegate callbacks must occur on the main thread");
+    if (![NSThread isMainThread]) {
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [self informDelegateOfObjectLoadWithResultDictionary:resultDictionary];
+        }];
+        return;
+    }
 
     RKObjectMappingResult* result = [RKObjectMappingResult mappingResultWithDictionary:resultDictionary];
 
@@ -397,7 +413,12 @@
         }
 
         if (self.onDidFailLoadWithError) {
-            self.onDidFailLoadWithError(error);
+            if ([NSThread isMainThread])
+                self.onDidFailLoadWithError(error);
+            else
+                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                    self.onDidFailLoadWithError(error);
+                }];
         }
 
         // If we failed due to a transport error or before we have a response, the request itself failed
@@ -420,7 +441,6 @@
 
 // NOTE: We do NOT call super here. We are overloading the default behavior from RKRequest
 - (void)didFinishLoad:(RKResponse*)response {
-    NSAssert([NSThread isMainThread], @"RKObjectLoaderDelegate callbacks must occur on the main thread");
     self.response = response;
 
     if ((_cachePolicy & RKRequestCachePolicyEtag) && [response isNotModified]) {
@@ -438,7 +458,12 @@
     }
 
     if (self.onDidLoadResponse) {
-        self.onDidLoadResponse(self.response);
+        if ([NSThread isMainThread])
+            self.onDidLoadResponse(self.response);
+        else
+            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                self.onDidLoadResponse(self.response);
+            }];
     }
 
     // Post the notification

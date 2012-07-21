@@ -648,7 +648,12 @@ RKRequestMethod RKRequestMethodTypeFromName(NSString *methodName) {
         }
 
         if (self.onDidFailLoadWithError) {
-            self.onDidFailLoadWithError(error);
+            if ([NSThread isMainThread])
+                self.onDidFailLoadWithError(error);
+            else
+                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                    self.onDidFailLoadWithError(error);
+                }];
         }
 
 
@@ -692,7 +697,12 @@ RKRequestMethod RKRequestMethodTypeFromName(NSString *methodName) {
     }
 
     if (self.onDidLoadResponse) {
-        self.onDidLoadResponse(self.response);
+        if ([NSThread isMainThread])
+            self.onDidLoadResponse(self.response);
+        else
+            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                self.onDidLoadResponse(self.response);
+            }];
     }
 
     if ([response isServiceUnavailable]) {

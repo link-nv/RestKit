@@ -165,12 +165,7 @@
         BOOL success = [self.objectStore save:&error];
         if (! success) {
             RKLogError(@"Failed to save managed object context after mapping completed: %@", [error localizedDescription]);
-            NSMethodSignature* signature = [(NSObject *)self methodSignatureForSelector:@selector(informDelegateOfError:)];
-            RKManagedObjectThreadSafeInvocation* invocation = [RKManagedObjectThreadSafeInvocation invocationWithMethodSignature:signature];
-            [invocation setTarget:self];
-            [invocation setSelector:@selector(informDelegateOfError:)];
-            [invocation setArgument:&error atIndex:2];
-            [invocation invokeOnMainThread];
+            [self performSelector:@selector(informDelegateOfError:) withObject:error];
 
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self finalizeLoad:success];
@@ -187,7 +182,7 @@
     [invocation setSelector:@selector(informDelegateOfObjectLoadWithResultDictionary:)];
     [invocation setArgument:&dictionary atIndex:2];
     [invocation setManagedObjectKeyPaths:_managedObjectKeyPaths forArgument:2];
-    [invocation invokeOnMainThread];
+    [invocation invoke];
 }
 
 // Overloaded to handle deleting an object orphaned by a failed postObject:

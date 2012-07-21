@@ -114,11 +114,7 @@
 
     self.attributeValuesToObjectIDs = [NSMutableDictionary dictionaryWithCapacity:[objectIDs count]];
     for (NSManagedObjectID *objectID in objectIDs) {
-        NSError *error = nil;
-        NSManagedObject *object = [self.managedObjectContext existingObjectWithID:objectID error:&error];
-        if (! object && error) {
-            RKLogError(@"Failed to retrieve managed object with ID %@: %@", objectID, error);
-        }
+        NSManagedObject *object = [self.managedObjectContext objectWithID:objectID];
 
         [self addObject:object];
     }
@@ -240,7 +236,8 @@
 
 - (void)managedObjectContextDidChange:(NSNotification *)notification
 {
-    if (self.monitorsContextForChanges == NO) return;
+    if (self.monitorsContextForChanges == NO)
+        return;
 
     NSDictionary *userInfo = notification.userInfo;
     NSSet *insertedObjects = [userInfo objectForKey:NSInsertedObjectsKey];
@@ -251,13 +248,22 @@
     NSMutableSet *objectsToAdd = [NSMutableSet setWithSet:insertedObjects];
     [objectsToAdd unionSet:updatedObjects];
 
-    for (NSManagedObject *object in objectsToAdd) {
+    NSError *error = nil;
+    for (NSManagedObject *sourceMocObject in objectsToAdd) {
+        NSManagedObject *object = [self.managedObjectContext existingObjectWithID:sourceMocObject.objectID error:&error];
+        if (!object && error) {
+            RKLogError(@"Failed to retrieve managed object with ID %@: %@", sourceMocObject.objectID, error);
+        }
         if ([object.entity isEqual:self.entity]) {
             [self addObject:object];
         }
     }
 
-    for (NSManagedObject *object in deletedObjects) {
+    for (NSManagedObject *sourceMocObject in deletedObjects) {
+        NSManagedObject *object = [self.managedObjectContext existingObjectWithID:sourceMocObject.objectID error:&error];
+        if (!object && error) {
+            RKLogError(@"Failed to retrieve managed object with ID %@: %@", sourceMocObject.objectID, error);
+        }
         if ([object.entity isEqual:self.entity]) {
             [self removeObject:object];
         }
