@@ -72,7 +72,7 @@
 
             // Implemented for issue 284 - https://github.com/RestKit/RestKit/issues/284
             relatedObject = [NSMutableSet set];
-            NSObject<RKManagedObjectCaching> *cache = [[(RKManagedObjectMapping*)[self objectMapping] objectStore] cacheStrategy];
+            NSObject<RKManagedObjectCaching> *cache = objectMapping.objectStore.cacheStrategy;
             for (id foreignKey in valueOfLocalPrimaryKeyAttribute) {
                 id searchResult = [cache findInstanceOfEntity:objectMapping.entity withPrimaryKeyAttribute:primaryKeyAttributeOfRelatedObject value:foreignKey inManagedObjectContext:[[(RKManagedObjectMapping*)[self objectMapping] objectStore] managedObjectContextForCurrentThread]];
                 if (searchResult) {
@@ -83,7 +83,7 @@
             RKLogTrace(@"Connecting has-one relationship at keyPath '%@' to object with primaryKey attribute '%@'", relationshipName, primaryKeyAttributeOfRelatedObject);
 
             // Normal foreign key
-            NSObject<RKManagedObjectCaching> *cache = [[(RKManagedObjectMapping*)[self objectMapping] objectStore] cacheStrategy];
+            NSObject<RKManagedObjectCaching> *cache = objectMapping.objectStore.cacheStrategy;
             relatedObject = [cache findInstanceOfEntity:objectMapping.entity withPrimaryKeyAttribute:primaryKeyAttributeOfRelatedObject value:valueOfLocalPrimaryKeyAttribute inManagedObjectContext:[self.destinationObject managedObjectContext]];
         }
         if (relatedObject) {
