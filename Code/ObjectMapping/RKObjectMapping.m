@@ -223,30 +223,33 @@ NSString* const RKObjectMappingNestingAttributeKeyName = @"<RK_NESTING_ATTRIBUTE
     [self mapAttributesCollection:[NSSet setWithArray:array]];
 }
 
-- (void)mapKeyPath:(NSString *)relationshipKeyPath toRelationship:(NSString*)keyPath withMapping:(RKObjectMappingDefinition *)objectOrDynamicMapping serialize:(BOOL)serialize {
+- (RKObjectRelationshipMapping *)mapKeyPath:(NSString *)relationshipKeyPath toRelationship:(NSString*)keyPath withMapping:(RKObjectMappingDefinition *)objectOrDynamicMapping serialize:(BOOL)serialize {
     RKObjectRelationshipMapping* mapping = [RKObjectRelationshipMapping mappingFromKeyPath:relationshipKeyPath toKeyPath:keyPath withMapping:objectOrDynamicMapping reversible:serialize];
     [self addRelationshipMapping:mapping];
+
+    return mapping;
 }
 
-- (void)mapKeyPath:(NSString *)relationshipKeyPath toRelationship:(NSString*)keyPath withMapping:(RKObjectMappingDefinition *)objectOrDynamicMapping {
-    [self mapKeyPath:relationshipKeyPath toRelationship:keyPath withMapping:objectOrDynamicMapping serialize:YES];
+- (RKObjectRelationshipMapping *)mapKeyPath:(NSString *)relationshipKeyPath toRelationship:(NSString*)keyPath withMapping:(RKObjectMappingDefinition *)objectOrDynamicMapping {
+    return [self mapKeyPath:relationshipKeyPath toRelationship:keyPath withMapping:objectOrDynamicMapping serialize:YES];
 }
 
-- (void)mapRelationship:(NSString*)relationshipKeyPath withMapping:(RKObjectMappingDefinition *)objectOrDynamicMapping {
-    [self mapKeyPath:relationshipKeyPath toRelationship:relationshipKeyPath withMapping:objectOrDynamicMapping];
+- (RKObjectRelationshipMapping *)mapRelationship:(NSString*)relationshipKeyPath withMapping:(RKObjectMappingDefinition *)objectOrDynamicMapping {
+    return [self mapKeyPath:relationshipKeyPath toRelationship:relationshipKeyPath withMapping:objectOrDynamicMapping];
 }
 
-- (void)mapKeyPath:(NSString*)sourceKeyPath toAttribute:(NSString*)destinationKeyPath {
+- (RKObjectAttributeMapping *)mapKeyPath:(NSString*)sourceKeyPath toAttribute:(NSString*)destinationKeyPath {
     RKObjectAttributeMapping* mapping = [RKObjectAttributeMapping mappingFromKeyPath:sourceKeyPath toKeyPath:destinationKeyPath];
     [self addAttributeMapping:mapping];
+    return mapping;
 }
 
-- (void)hasMany:(NSString*)keyPath withMapping:(RKObjectMappingDefinition *)objectOrDynamicMapping {
-    [self mapRelationship:keyPath withMapping:objectOrDynamicMapping];
+- (RKObjectRelationshipMapping *)hasMany:(NSString*)keyPath withMapping:(RKObjectMappingDefinition *)objectOrDynamicMapping {
+    return [self mapRelationship:keyPath withMapping:objectOrDynamicMapping];
 }
 
-- (void)hasOne:(NSString*)keyPath withMapping:(RKObjectMappingDefinition *)objectOrDynamicMapping {
-    [self mapRelationship:keyPath withMapping:objectOrDynamicMapping];
+- (RKObjectRelationshipMapping *)hasOne:(NSString*)keyPath withMapping:(RKObjectMappingDefinition *)objectOrDynamicMapping {
+    return [self mapRelationship:keyPath withMapping:objectOrDynamicMapping];
 }
 
 - (void)removeAllMappings {
@@ -357,7 +360,7 @@ NSString* const RKObjectMappingNestingAttributeKeyName = @"<RK_NESTING_ATTRIBUTE
 /////////////////////////////////////////////////////////////////////////////
 
 static NSMutableArray *defaultDateFormatters = nil;
-static NSDateFormatter *preferredDateFormatter = nil;
+static NSFormatter *preferredDateFormatter = nil;
 
 @implementation RKObjectMapping (DateAndTimeFormatting)
 
@@ -366,10 +369,7 @@ static NSDateFormatter *preferredDateFormatter = nil;
         defaultDateFormatters = [[NSMutableArray alloc] initWithCapacity:2];
 
         // Setup the default formatters
-        RKISO8601DateFormatter *isoFormatter = [[RKISO8601DateFormatter alloc] init];
-        [self addDefaultDateFormatter:isoFormatter];
-        [isoFormatter release];
-
+        [self addDefaultDateFormatter:[self preferredDateFormatter]];
         [self addDefaultDateFormatterForString:@"MM/dd/yyyy" inTimeZone:nil];
         [self addDefaultDateFormatterForString:@"yyyy-MM-dd'T'HH:mm:ss'Z'" inTimeZone:nil];
     }
@@ -407,13 +407,8 @@ static NSDateFormatter *preferredDateFormatter = nil;
 }
 
 + (NSFormatter *)preferredDateFormatter {
-    if (!preferredDateFormatter) {
-        // A date formatter that matches the output of [NSDate description]
-        preferredDateFormatter = [NSDateFormatter new];
-        [preferredDateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss Z"];
-        preferredDateFormatter.timeZone = [NSTimeZone timeZoneWithAbbreviation:@"UTC"];
-        preferredDateFormatter.locale = [[[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"] autorelease];
-    }
+    if (!preferredDateFormatter)
+        preferredDateFormatter = [[RKISO8601DateFormatter alloc] init];
 
     return preferredDateFormatter;
 }

@@ -53,7 +53,7 @@
 
     RKObjectRelationshipMapping* relationshipMapping = [self.objectMapping mappingForRelationship:relationshipName];
     RKObjectMappingDefinition *mapping = relationshipMapping.mapping;
-    NSAssert(mapping, @"Attempted to connect relationship for keyPath '%@' without a relationship mapping defined.");
+    NSAssert(mapping, @"Attempted to connect relationship for keyPath '%@' without a relationship mapping defined.", relationshipMapping.sourceKeyPath);
     if (! [mapping isKindOfClass:[RKObjectMapping class]]) {
         RKLogWarning(@"Can only connect relationships for RKObjectMapping relationships. Found %@: Skipping...", NSStringFromClass([mapping class]));
         return;
@@ -68,10 +68,16 @@
     if (valueOfLocalPrimaryKeyAttribute) {
         id relatedObject = nil;
         if ([valueOfLocalPrimaryKeyAttribute conformsToProtocol:@protocol(NSFastEnumeration)]) {
+            // Implemented for issue 284 - https://github.com/RestKit/RestKit/issues/284
             RKLogTrace(@"Connecting has-many relationship at keyPath '%@' to object with primaryKey attribute '%@'", relationshipName, primaryKeyAttributeOfRelatedObject);
 
-            // Implemented for issue 284 - https://github.com/RestKit/RestKit/issues/284
-            relatedObject = [NSMutableSet set];
+            if ([[self.destinationObject valueForKeyPath:relationshipName] isKindOfClass:[NSSet class]])
+                relatedObject = [NSMutableSet set];
+            else if ([[self.destinationObject valueForKeyPath:relationshipName] isKindOfClass:NSClassFromString(@"NSOrderedSet")])
+                relatedObject = [NSClassFromString(@"NSMutableOrderedSet") orderedSet];
+            else
+                relatedObject = [NSMutableArray array];
+
             NSObject<RKManagedObjectCaching> *cache = objectMapping.objectStore.cacheStrategy;
             for (id foreignKey in valueOfLocalPrimaryKeyAttribute) {
                 id searchResult = [cache findInstanceOfEntity:objectMapping.entity withPrimaryKeyAttribute:primaryKeyAttributeOfRelatedObject value:foreignKey inManagedObjectContext:[[(RKManagedObjectMapping*)[self objectMapping] objectStore] managedObjectContextForCurrentThread]];
