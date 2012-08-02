@@ -331,6 +331,11 @@ BOOL RKObjectIsValueEqualToValue(id sourceValue, id destinationValue) {
 
     // Inspect the property type to handle any value transformations
     Class type = [self.objectMapping classForProperty:attributeMapping.destinationKeyPath];
+    Class orderedSetClass = NSClassFromString(@"NSOrderedSet");
+    if (!type && ([value isKindOfClass:[NSSet class]] || (orderedSetClass && [[value class] isSubclassOfClass:orderedSetClass])))
+        // If no explicit destination type is set and the source object is a set, convert it to an array.
+        // Sets are not supported for serialization.
+        type = [NSArray class];
     if (type && NO == [[value class] isSubclassOfClass:type]) {
         value = [self transformValue:value atKeyPath:attributeMapping.sourceKeyPath toType:type];
     }
