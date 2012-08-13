@@ -265,15 +265,15 @@ RKRequestMethod RKRequestMethodTypeFromName(NSString *methodName) {
     return (_params && (_method != RKRequestMethodGET && _method != RKRequestMethodHEAD));
 }
 
-- (void)setRequestBody {
+- (void)setRequestBody:(NSMutableURLRequest *)urlRequest {
     if ([self shouldSendParams]) {
         // Prefer the use of a stream over a raw body
         if ([_params respondsToSelector:@selector(HTTPBodyStream)]) {
             // NOTE: This causes the stream to be retained. For RKParams, this will
             // cause a leak unless the stream is released. See [RKParams close]
-            [_URLRequest setHTTPBodyStream:[_params HTTPBodyStream]];
+            [urlRequest setHTTPBodyStream:[_params HTTPBodyStream]];
         } else {
-            [_URLRequest setHTTPBody:[_params HTTPBody]];
+            [urlRequest setHTTPBody:[_params HTTPBody]];
         }
     }
 }
@@ -294,24 +294,24 @@ RKRequestMethod RKRequestMethodTypeFromName(NSString *methodName) {
     [self.URLRequest setHTTPBody:[HTTPBodyString dataUsingEncoding:NSASCIIStringEncoding]];
 }
 
-- (void)addHeadersToRequest {
+- (void)addHeadersToRequest:(NSMutableURLRequest *)urlRequest {
     NSString *header = nil;
     for (header in _additionalHTTPHeaders) {
-        [_URLRequest setValue:[_additionalHTTPHeaders valueForKey:header] forHTTPHeaderField:header];
+        [urlRequest setValue:[_additionalHTTPHeaders valueForKey:header] forHTTPHeaderField:header];
     }
 
     if ([self shouldSendParams]) {
         // Temporarily support older RKRequestSerializable implementations
         if ([_params respondsToSelector:@selector(HTTPHeaderValueForContentType)]) {
-            [_URLRequest setValue:[_params HTTPHeaderValueForContentType] forHTTPHeaderField:@"Content-Type"];
+            [urlRequest setValue:[_params HTTPHeaderValueForContentType] forHTTPHeaderField:@"Content-Type"];
         } else if ([_params respondsToSelector:@selector(ContentTypeHTTPHeader)]) {
-            [_URLRequest setValue:[_params performSelector:@selector(ContentTypeHTTPHeader)] forHTTPHeaderField:@"Content-Type"];
+            [urlRequest setValue:[_params performSelector:@selector(ContentTypeHTTPHeader)] forHTTPHeaderField:@"Content-Type"];
         }
         if ([_params respondsToSelector:@selector(HTTPHeaderValueForContentLength)]) {
-            [_URLRequest setValue:[NSString stringWithFormat:@"%d", [_params HTTPHeaderValueForContentLength]] forHTTPHeaderField:@"Content-Length"];
+            [urlRequest setValue:[NSString stringWithFormat:@"%d", [_params HTTPHeaderValueForContentLength]] forHTTPHeaderField:@"Content-Length"];
         }
     } else {
-        [_URLRequest setValue:@"0" forHTTPHeaderField:@"Content-Length"];
+        [urlRequest setValue:@"0" forHTTPHeaderField:@"Content-Length"];
     }
 
     // Add authentication headers so we don't have to deal with an extra cycle for each message requiring basic auth.
@@ -321,7 +321,7 @@ RKRequestMethod RKRequestMethodTypeFromName(NSString *methodName) {
           CFHTTPMessageAddAuthentication(dummyRequest, nil, (CFStringRef)_username, (CFStringRef)_password,kCFHTTPAuthenticationSchemeBasic, FALSE);
           CFStringRef authorizationString = CFHTTPMessageCopyHeaderFieldValue(dummyRequest, CFSTR("Authorization"));
           if (authorizationString) {
-            [_URLRequest setValue:(NSString *)authorizationString forHTTPHeaderField:@"Authorization"];
+            [urlRequest setValue:(NSString *)authorizationString forHTTPHeaderField:@"Authorization"];
             CFRelease(authorizationString);
           }
           CFRelease(dummyRequest);
@@ -367,38 +367,44 @@ RKRequestMethod RKRequestMethodTypeFromName(NSString *methodName) {
                                consumerSecret:self.OAuth1ConsumerSecret
                                   accessToken:self.OAuth1AccessToken
                                   tokenSecret:self.OAuth1AccessTokenSecret];
-        [_URLRequest setValue:[echo valueForHTTPHeaderField:@"Authorization"] forHTTPHeaderField:@"Authorization"];
-        [_URLRequest setValue:[echo valueForHTTPHeaderField:@"Accept-Encoding"] forHTTPHeaderField:@"Accept-Encoding"];
-        [_URLRequest setValue:[echo valueForHTTPHeaderField:@"User-Agent"] forHTTPHeaderField:@"User-Agent"];
+        [urlRequest setValue:[echo valueForHTTPHeaderField:@"Authorization"] forHTTPHeaderField:@"Authorization"];
+        [urlRequest setValue:[echo valueForHTTPHeaderField:@"Accept-Encoding"] forHTTPHeaderField:@"Accept-Encoding"];
+        [urlRequest setValue:[echo valueForHTTPHeaderField:@"User-Agent"] forHTTPHeaderField:@"User-Agent"];
     }
 
     // OAuth 2 valid request
     if(self.authenticationType == RKRequestAuthenticationTypeOAuth2) {
         NSString *authorizationString = [NSString stringWithFormat:@"OAuth2 %@",self.OAuth2AccessToken];
-        [_URLRequest setValue:authorizationString forHTTPHeaderField:@"Authorization"];
+        [urlRequest setValue:authorizationString forHTTPHeaderField:@"Authorization"];
     }
 
     if (self.cachePolicy & RKRequestCachePolicyEtag) {
         NSString* etag = [self.cache etagForRequest:self];
         if (etag) {
             RKLogTrace(@"Setting If-None-Match header to '%@'", etag);
-            [_URLRequest setValue:etag forHTTPHeaderField:@"If-None-Match"];
+            [urlRequest setValue:etag forHTTPHeaderField:@"If-None-Match"];
         }
     }
 }
 
 // Setup the NSURLRequest. The request must be prepared right before dispatching
 - (BOOL)prepareURLRequest {
-    [_URLRequest setHTTPMethod:[self HTTPMethod]];
+
+    return [self prepareURLRequest:_URLRequest];
+}
+
+// Setup the NSURLRequest. The request must be prepared right before dispatching
+- (BOOL)prepareURLRequest:(NSMutableURLRequest *)urlRequest {
+    [urlRequest setHTTPMethod:[self HTTPMethod]];
 
     if ([self.delegate respondsToSelector:@selector(requestWillPrepareForSend:)]) {
         [self.delegate requestWillPrepareForSend:self];
     }
 
-    [self setRequestBody];
-    [self addHeadersToRequest];
+    [self setRequestBody:urlRequest];
+    [self addHeadersToRequest:urlRequest];
 
-    NSString* body = [[NSString alloc] initWithData:[_URLRequest HTTPBody] encoding:NSUTF8StringEncoding];
+    NSString* body = [[NSString alloc] initWithData:[urlRequest HTTPBody] encoding:NSUTF8StringEncoding];
     RKLogTrace(@"Prepared %@ URLRequest '%@'. HTTP Headers: %@. HTTP Body: %@.", [self HTTPMethod], _URLRequest, [_URLRequest allHTTPHeaderFields], body);
     [body release];
 

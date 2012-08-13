@@ -592,6 +592,7 @@ typedef void(^RKRequestDidFailLoadWithErrorBlock)(NSError *error);
  @return A boolean for the success of the URL preparation.
  */
 - (BOOL)prepareURLRequest;
+- (BOOL)prepareURLRequest:(NSMutableURLRequest *)urlRequest;
 
 /**
  The request queue that this request belongs to

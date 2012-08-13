@@ -55,9 +55,7 @@ return __VA_ARGS__;                                                             
 - (id)initWithRequest:(RKRequest *)request {
     self = [self init];
     if (self) {
-        // We don't retain here as we're letting RKRequestQueue manage
-        // request ownership
-        _request = request;
+        _request = [request retain];
     }
 
     return self;
@@ -88,6 +86,8 @@ return __VA_ARGS__;                                                             
 }
 
 - (void)dealloc {
+
+    [_request release];
     _request = nil;
     [_httpURLResponse release];
     _httpURLResponse = nil;
@@ -97,6 +97,7 @@ return __VA_ARGS__;                                                             
     _failureError = nil;
     [_responseHeaders release];
     _responseHeaders = nil;
+
     [super dealloc];
 }
 
@@ -184,13 +185,22 @@ return __VA_ARGS__;                                                             
 }
 
 - (NSURLRequest *)connection:(NSURLConnection *)connection willSendRequest:(NSURLRequest *)request redirectResponse:(NSURLResponse *)response {
-  if (nil == response || _request.followRedirect) {
-    RKLogDebug(@"Proceeding with request to %@", request);
-    return request;
-  } else {
-    RKLogDebug(@"Not following redirect to %@", request);
-    return nil;
+  if (nil == response)
+      return request;
+
+  if (!_request.followRedirect) {
+      RKLogDebug(@"Not following redirect to %@", request);
+      return nil;
   }
+
+  NSMutableURLRequest *preparedRequest = [[request mutableCopy] autorelease];
+  if ([self.request prepareURLRequest:preparedRequest]) {
+      RKLogDebug(@"Proceeding with request to %@", preparedRequest);
+      return preparedRequest;
+  }
+
+  RKLogDebug(@"Couldn't prepare redirect request, falling back to a simple redirect request: %@", request);
+  return request;
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {

@@ -222,9 +222,11 @@ static RKManagedObjectStore *defaultObjectStore = nil;
  */
 - (BOOL)save:(NSError **)error {
     NSManagedObjectContext* moc = [self managedObjectContextForCurrentThread];
-    NSError *localError = nil;
-
+    if (![moc hasChanges])
+        return YES;
+    
     @try {
+        NSError *localError = nil;
         if (![moc save:&localError]) {
             if (self.delegate != nil && [self.delegate respondsToSelector:@selector(managedObjectStore:didFailToSaveContext:error:exception:)]) {
                 [self.delegate managedObjectStore:self didFailToSaveContext:moc error:localError exception:nil];

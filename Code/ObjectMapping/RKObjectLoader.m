@@ -441,9 +441,20 @@
 
 // NOTE: We do NOT call super here. We are overloading the default behavior from RKRequest
 - (void)didFinishLoad:(RKResponse*)response {
+
+    NSString *location = [response.allHeaderFields objectForKey:@"Location"];
+    if (location) {
+        self.method = RKRequestMethodGET;
+        self.URL = [NSURL URLWithString:location relativeToURL:self.URL];
+        self.loading = NO;
+        [self reset];
+        [self sendAsynchronously];
+        return;
+    }
+
     self.response = response;
 
-    if ((_cachePolicy & RKRequestCachePolicyEtag) && [response isNotModified]) {
+    if ((_cachePolicy & RKRequestCachePolicyEtag) && [self.response isNotModified]) {
         self.response = [self.cache responseForRequest:self];
         NSAssert(self.response, @"Unexpectedly loaded nil response from cache");
         [self updateInternalCacheDate];
