@@ -32,7 +32,8 @@
 - (NSManagedObject *)findInstanceOfEntity:(NSEntityDescription *)entity
                   withPrimaryKeyAttribute:(NSString *)primaryKeyAttribute
                                     value:(id)primaryKeyValue
-                   inManagedObjectContext:(NSManagedObjectContext *)managedObjectContext;
+                   inManagedObjectContext:(NSManagedObjectContext *)managedObjectContext
+                             sentByServer:(BOOL)sentByServer;
 
 @optional
 

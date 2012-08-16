@@ -171,7 +171,8 @@
         object = [self.objectStore.cacheStrategy findInstanceOfEntity:entity
                                               withPrimaryKeyAttribute:primaryKeyAttribute
                                                                 value:primaryKeyValue
-                                               inManagedObjectContext:[self.objectStore managedObjectContextForCurrentThread]];
+                                               inManagedObjectContext:[self.objectStore managedObjectContextForCurrentThread]
+                                                         sentByServer:YES];
 
         if (object && [self.objectStore.cacheStrategy respondsToSelector:@selector(didFetchObject:)]) {
             [self.objectStore.cacheStrategy didFetchObject:object];

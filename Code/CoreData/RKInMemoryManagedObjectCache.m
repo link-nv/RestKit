@@ -44,6 +44,7 @@ static NSString * const RKInMemoryObjectManagedObjectCacheThreadDictionaryKey = 
                   withPrimaryKeyAttribute:(NSString *)primaryKeyAttribute
                                     value:(id)primaryKeyValue
                    inManagedObjectContext:(NSManagedObjectContext *)managedObjectContext
+                             sentByServer:(BOOL)sentByServer
 {
     RKEntityCache *entityCache = [self cacheForEntity:entity inManagedObjectContext:managedObjectContext];
     if (! [entityCache isEntity:entity cachedByAttribute:primaryKeyAttribute]) {

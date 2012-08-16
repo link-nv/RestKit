@@ -80,7 +80,7 @@
 
             NSObject<RKManagedObjectCaching> *cache = objectMapping.objectStore.cacheStrategy;
             for (id foreignKey in valueOfLocalPrimaryKeyAttribute) {
-                id searchResult = [cache findInstanceOfEntity:objectMapping.entity withPrimaryKeyAttribute:primaryKeyAttributeOfRelatedObject value:foreignKey inManagedObjectContext:[[(RKManagedObjectMapping*)[self objectMapping] objectStore] managedObjectContextForCurrentThread]];
+                id searchResult = [cache findInstanceOfEntity:objectMapping.entity withPrimaryKeyAttribute:primaryKeyAttributeOfRelatedObject value:foreignKey inManagedObjectContext:[[(RKManagedObjectMapping*)[self objectMapping] objectStore] managedObjectContextForCurrentThread] sentByServer:NO];
                 if (searchResult) {
                     [relatedObject addObject:searchResult];
                 }
@@ -90,7 +90,7 @@
 
             // Normal foreign key
             NSObject<RKManagedObjectCaching> *cache = objectMapping.objectStore.cacheStrategy;
-            relatedObject = [cache findInstanceOfEntity:objectMapping.entity withPrimaryKeyAttribute:primaryKeyAttributeOfRelatedObject value:valueOfLocalPrimaryKeyAttribute inManagedObjectContext:[self.destinationObject managedObjectContext]];
+            relatedObject = [cache findInstanceOfEntity:objectMapping.entity withPrimaryKeyAttribute:primaryKeyAttributeOfRelatedObject value:valueOfLocalPrimaryKeyAttribute inManagedObjectContext:[self.destinationObject managedObjectContext] sentByServer:NO];
         }
         if (relatedObject) {
             RKLogDebug(@"Connected relationship '%@' to object with primary key value '%@': %@", relationshipName, valueOfLocalPrimaryKeyAttribute, relatedObject);

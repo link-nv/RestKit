@@ -23,6 +23,7 @@
                   withPrimaryKeyAttribute:(NSString *)primaryKeyAttribute
                                     value:(id)primaryKeyValue
                    inManagedObjectContext:(NSManagedObjectContext *)managedObjectContext
+                             sentByServer:(BOOL)sentByServer
 {
     NSAssert(entity, @"Cannot find existing managed object without a target class");
     NSAssert(primaryKeyAttribute, @"Cannot find existing managed object instance without mapping that defines a primaryKeyAttribute");
