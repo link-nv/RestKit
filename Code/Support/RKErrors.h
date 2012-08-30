@@ -36,6 +36,11 @@ typedef enum {
 /** @name Error Constants */
 
 /**
+* The key in a RKObjectLoaderUnexpectedResponseError error's userInfo dictionary at which the RKResponse can be found.
+*/
+extern NSString* const RKErrorResponseKey;
+
+/**
  The key RestKit generated errors will appear at within an NSNotification
  indicating an error
  */

@@ -22,5 +22,6 @@
 
 NSString* const RKErrorDomain = @"org.restkit.RestKit.ErrorDomain";
 
+NSString* const RKErrorResponseKey = @"RKErrorResponseKey";
 NSString* const RKObjectMapperErrorObjectsKey = @"RKObjectMapperErrorObjectsKey";
 NSString* const RKErrorNotificationErrorKey = @"error";
